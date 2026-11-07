@@ -49,6 +49,7 @@ Use a paid plan for classroom use: the free web tier sleeps when idle and the fi
 | `TMP_ROLE_MAP` | no | JSON, e.g. `{"teacher":"tutor","pupil":"student"}` |
 | `DATABASE_URL` | yes | provided by the Blueprint |
 | `MAX_BOARD_BYTES` | no | default 1,500,000 |
+| `TRUST_PROXY_HOPS` | no | proxies in front of the API; default `2` in production (Vercel rewrite + Render). Makes the visitor's real address visible to the rate limiter |
 | `DEV_AUTH` | **never in prod** | must be unset/false |
 
 ## 3. Vercel (frontend)
@@ -80,6 +81,15 @@ The CSP in `vercel.json` allows the Studio to be embedded only by the TMP site (
 - `…/api/auth/me` returns `401` when signed out (not a 5xx or HTML page) — proves the rewrite reaches Render.
 - Sign in through TMP → role badge appears → **Boards → Save to cloud** works → reload and it is listed.
 - A student account cannot open a tutor's private board (404/403); a classmate sees a published board read-only.
+
+## Many people at once
+
+- **Drawing is local.** Every person's canvas runs in their own browser; nothing is shared while drawing, so any number of students can draw at the same time without affecting each other. Guests' work is saved only in their own browser.
+- **Boards are per account.** Each saved board belongs to one TMP user; tutors publish read-only copies to a class, students submit to their tutor. Nobody edits someone else's board.
+- **Two tabs / two devices, same board.** Saves carry a version number checked inside the database update; the second, stale save gets a `409` and the app asks to reload instead of overwriting.
+- **Not live co-editing.** Two people cannot draw on the same board simultaneously and see each other's strokes (that would need a real-time layer such as WebSockets — not built).
+- **Rate limits are per signed-in account**, not per network address, so a class on one school connection (or behind Vercel) does not share a budget. Anonymous requests are limited per visitor address (needs `TRUST_PROXY_HOPS` to be right).
+- **Capacity.** One Render instance comfortably serves a classroom-sized load (requests are small JSON reads/writes; board size is capped by `MAX_BOARD_BYTES`). Sessions are stateless. If you ever run more than one API instance, move the single-use token cache (`jti`) and the rate-limit counters out of memory first (see AUTH_INTEGRATION.md).
 
 ## Rollback and operations
 

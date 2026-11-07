@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import crypto from 'node:crypto';
 import { z } from 'zod';
 import {
@@ -29,7 +29,7 @@ export function createApp({ cfg, store, fetchImpl = fetch }) {
   const app = express();
   const jti = new JtiCache();
 
-  app.set('trust proxy', 1); // Render / Vercel sit in front of us
+  app.set('trust proxy', cfg.trustProxyHops); // Vercel + Render sit in front of us (TRUST_PROXY_HOPS)
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(
@@ -52,13 +52,24 @@ export function createApp({ cfg, store, fetchImpl = fetch }) {
     next();
   });
 
-  const limiter = (max) => rateLimit({ windowMs: 60_000, limit: max, standardHeaders: 'draft-7', legacyHeaders: false });
+  // Signed-in people are limited per account, so a whole class behind one school network (or one Vercel
+  // address) never shares a budget. Only anonymous requests fall back to the visitor's IP address.
+  const limiter = (max) =>
+    rateLimit({
+      windowMs: 60_000,
+      limit: max,
+      standardHeaders: 'draft-7',
+      legacyHeaders: false,
+      keyGenerator: (req) => (req.user?.id ? `u:${req.user.id}` : ipKeyGenerator(req.ip ?? '')),
+    });
   app.use('/api/', limiter(300));
 
   app.get('/healthz', (_req, res) => res.json({ ok: true, service: 'tmp-graphing-studio-api' }));
 
   // ---------------------------------------------------------------- auth
-  app.post('/api/auth/exchange', limiter(20), async (req, res) => {
+  // Handoff tokens are signed, single-use and short-lived, so guessing is pointless; the limit only has to stop floods,
+  // and must leave room for a whole class (often one shared network address) signing in at the start of a lesson.
+  app.post('/api/auth/exchange', limiter(300), async (req, res) => {
     const token = req.body?.token;
     const user = await verifyTmpCredential(token, cfg, jti, fetchImpl);
     res.cookie(cfg.cookieName, issueSession(user, cfg), cookieOptions(cfg));

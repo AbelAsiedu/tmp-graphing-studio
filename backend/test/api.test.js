@@ -209,6 +209,26 @@ test('viewer role is read-only', async () => {
   }
 });
 
+test('a whole class can sign in at once, and one heavy user cannot lock out another', async () => {
+  const ctx = await boot();
+  try {
+    // 60 students arrive from the same network address within a minute
+    const sessions = [];
+    for (let i = 0; i < 60; i++) sessions.push(await login(ctx, { sub: `student-${i}` }));
+    assert.equal(sessions.length, 60);
+
+    // one user hammering the API hits their own limit ...
+    const [a, b] = sessions;
+    let limited = 0;
+    for (let i = 0; i < 320; i++) if ((await a('/api/auth/me')).status === 429) limited++;
+    assert.ok(limited > 0, 'the heavy user should be rate limited');
+    // ... while everybody else keeps working
+    assert.equal((await b('/api/auth/me')).status, 200);
+  } finally {
+    await ctx.close();
+  }
+});
+
 test('production config refuses weak secrets', () => {
   assert.throws(() => loadConfig({ NODE_ENV: 'production', SESSION_SECRET: 'short', FRONTEND_ORIGINS: 'https://graphing.example.com', TMP_HANDOFF_SECRET: 'short' }), /SESSION_SECRET/);
 });

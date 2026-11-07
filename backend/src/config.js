@@ -21,6 +21,9 @@ export function loadConfig(env = process.env) {
     // Our own session (issued after a successful TMP handoff).
     sessionSecret: env.SESSION_SECRET || '',
     sessionTtlSeconds: Number(env.SESSION_TTL_SECONDS || 8 * 3600),
+    // How many reverse proxies sit in front of the API (Vercel rewrite + Render's load balancer = 2 in production).
+    // Needed so req.ip is the visitor's real address, not Vercel's.
+    trustProxyHops: Number(env.TRUST_PROXY_HOPS ?? (isProd ? 2 : 0)),
     cookieName: env.SESSION_COOKIE_NAME || 'tmpgs_session',
     // Set to ".themodernpedagogues.com" ONLY if the API is on a sibling subdomain
     // instead of being proxied through the frontend origin.
