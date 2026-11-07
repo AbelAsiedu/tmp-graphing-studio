@@ -1,0 +1,29 @@
+/*
+  TMP brand tokens — the ONLY file that needs to change to re-skin the Studio.
+
+  These values are a placeholder navy-and-gold palette: the official TMP colours, fonts and logo
+  were not available when this was built. Replace the values below (and the <Logo/> in App.tsx
+  and public/favicon.svg) with the colours from the main TMP website's stylesheet.
+*/
+:root {
+  --tmp-navy: #14284b;
+  --tmp-navy-2: #1f3d70;
+  --tmp-accent: #f2b134;
+  --tmp-accent-ink: #2a1f00;
+  --tmp-teal: #1f9d9a;
+
+  --tmp-bg: #eef1f7;
+  --tmp-surface: #ffffff;
+  --tmp-surface-2: #f6f8fc;
+  --tmp-text: #17233b;
+  --tmp-muted: #66728b;
+  --tmp-border: #d9dfeb;
+  --tmp-danger: #c53a3a;
+  --tmp-ok: #1f9d6b;
+  --tmp-warn: #e08a00;
+  --tmp-focus: #2f80ed;
+
+  --tmp-radius: 10px;
+  --tmp-font: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --tmp-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
