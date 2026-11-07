@@ -60,7 +60,7 @@ Use a paid plan for classroom use: the free web tier sleeps when idle and the fi
    | Variable | Value |
    |---|---|
    | `VITE_TMP_SIGNIN_URL` | optional — defaults to the TMP login page `https://themodernpedagogues-70f4f230adc2.herokuapp.com/login`. Set it to override (e.g. when TMP moves to `themodernpedagogues.com/login`) |
-   | `VITE_TMP_HOME_URL` | `https://themodernpedagogues.com` |
+   | `VITE_TMP_HOME_URL` | optional — defaults to the TMP site `https://themodernpedagogues-70f4f230adc2.herokuapp.com` (set to the custom domain once it points at TMP) |
    | `VITE_API_BASE_URL` | leave **empty** (same-origin `/api`) |
 
    Only `VITE_*` values reach the browser; never put secrets there.
@@ -72,7 +72,7 @@ Use a paid plan for classroom use: the free web tier sleeps when idle and the fi
 3. Wait for the certificate (usually minutes). Then set `FRONTEND_ORIGINS` on Render to `https://graphing.themodernpedagogues.com` if you haven't.
 4. This does not touch the existing TMP site's records.
 
-The CSP in `vercel.json` allows the Studio to be embedded only by `themodernpedagogues.com` and its subdomains (`frame-ancestors`), in case TMP wants to show it in an iframe.
+The CSP in `vercel.json` allows the Studio to be embedded only by the TMP site (`https://themodernpedagogues-70f4f230adc2.herokuapp.com`, `themodernpedagogues.com` and its subdomains) (`frame-ancestors`), in case TMP wants to show it in an iframe.
 
 ## 5. Verify a deployment
 

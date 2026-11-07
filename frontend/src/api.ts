@@ -69,4 +69,4 @@ export const api = {
 
 export const TMP_SIGNIN_URL = (import.meta.env.VITE_TMP_SIGNIN_URL as string | undefined) ||
   'https://themodernpedagogues-70f4f230adc2.herokuapp.com/login';
-export const TMP_HOME_URL = (import.meta.env.VITE_TMP_HOME_URL as string | undefined) ?? 'https://themodernpedagogues.com';
+export const TMP_HOME_URL = (import.meta.env.VITE_TMP_HOME_URL as string | undefined) || 'https://themodernpedagogues-70f4f230adc2.herokuapp.com';
