@@ -25,7 +25,7 @@ tmp-graphing-studio/
 | Annotation | Pencil, highlighter, **eraser (rubs out just the part under an adjustable circle — cuts strokes, lines, circles and outlines cleanly; or removes whole strokes)**, lines, arrows, circles, rectangles, points, text, angle measure, trace, select/move, undo/redo |
 | Teaching | Pages as slides, presentation mode (fullscreen), laser pointer, spotlight |
 | Export | PNG, JPEG, PDF (this page / all pages), save/open `.json` |
-| Starter tour | A 10-step guided tour (spotlights the real controls; works with keyboard and on phones) is offered once to new visitors and never to people who already have work on screen. The **?** button in the header replays it; add `?tour=1` to the address to force it, `?tour=0` to suppress it |
+| Starter tour | A 10-step guided tour (spotlights the real controls; works with keyboard and on phones) opens by itself on a visitor's first visit (it doesn't wait for sign-in, and still works if the browser blocks storage); after it is finished or skipped it stays closed. The **?** button in the header replays it; add `?tour=1` to the address to force it, `?tour=0` to suppress it |
 | Cloud | Boards saved per account; tutors publish to a class (read-only for classmates), students submit to their tutor |
 
 ## Run it locally

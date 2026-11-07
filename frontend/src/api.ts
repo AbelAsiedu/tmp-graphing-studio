@@ -34,13 +34,15 @@ export class ApiError extends Error {
   }
 }
 
-async function call<T>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
-  const { json, ...rest } = init;
+async function call<T>(path: string, init: RequestInit & { json?: unknown; timeoutMs?: number } = {}): Promise<T> {
+  const { json, timeoutMs = 20_000, ...rest } = init;
+  const signal = rest.signal ?? (typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal ? AbortSignal.timeout(timeoutMs) : undefined);
   let res: Response;
   try {
     res = await fetch(BASE + path, {
       credentials: 'include',
       ...rest,
+      signal,
       headers: { ...(json !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(rest.headers ?? {}) },
       body: json !== undefined ? JSON.stringify(json) : undefined,
     });
@@ -54,7 +56,7 @@ async function call<T>(path: string, init: RequestInit & { json?: unknown } = {}
 
 export const api = {
   me: () => call<{ user: User }>('/api/auth/me').then((r) => r.user).catch((e) => (e instanceof ApiError && e.status === 401 ? null : Promise.reject(e))),
-  exchange: (token: string) => call<{ user: User }>('/api/auth/exchange', { method: 'POST', json: { token } }).then((r) => r.user),
+  exchange: (token: string) => call<{ user: User }>('/api/auth/exchange', { method: 'POST', json: { token }, timeoutMs: 60_000 }).then((r) => r.user),
   logout: () => call<{ ok: true }>('/api/auth/logout', { method: 'POST' }),
   devLogin: (role: string, name: string, classIds: string[]) => call<{ user: User }>('/api/dev/login', { method: 'POST', json: { role, name, classIds } }).then((r) => r.user),
   listBoards: (scope: 'mine' | 'shared') => call<{ boards: BoardSummary[] }>(`/api/boards?scope=${scope}`).then((r) => r.boards),

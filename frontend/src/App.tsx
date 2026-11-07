@@ -117,7 +117,7 @@ export default function App() {
   const confirmReplace = () => !hasContent(store.doc) || confirm('Replace the drawing on screen? Anything not saved to the cloud or a file will be lost.');
 
   // ---- presentation mode ----------------------------------------------------------------
-  // ---- starter tour: offered once to new visitors (not to people who already have work on screen); the ? button replays it
+  // ---- starter tour: opens by itself on a first visit; the ? button replays it
   const startTour = useCallback(() => { setPresenting(false); setBoards(false); setTour(true); }, []);
   const closeTour = useCallback((how: 'finished' | 'skipped') => { markTourSeen(how); setTour(false); setSheet(false); setTab('graph'); }, []);
   const tourGoTab = useCallback((t: TourTab | null) => { if (t) { setTab(t); setSheet(true); } else setSheet(false); }, []);
@@ -130,15 +130,15 @@ export default function App() {
       return { ...p, params: { ...p.params, a: 1, b: -4, c: 3 }, equations: [...p.equations, eq] };
     });
   }, []);
+  // First visit = the tour has never been finished or skipped in this browser. It does not wait for the sign-in check
+  // (which can be slow while the API wakes up); the account step updates itself when that finishes.
   useEffect(() => {
-    if (auth.loading) return;
     const q = new URLSearchParams(window.location.search).get('tour');
     if (q === '0') return;
-    if (q !== '1' && (tourSeen() || hasContent(store.doc))) return;
-    const t = setTimeout(startTour, 900);
+    if (q !== '1' && tourSeen()) return;
+    const t = setTimeout(startTour, 700);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.loading]);
+  }, [startTour]);
 
   const present = useCallback(() => {
     setPresenting(true);
