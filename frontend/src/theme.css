@@ -1,29 +1,28 @@
 /*
   TMP brand tokens — the ONLY file that needs to change to re-skin the Studio.
-
-  These values are a placeholder navy-and-gold palette: the official TMP colours, fonts and logo
-  were not available when this was built. Replace the values below (and the <Logo/> in App.tsx
-  and public/favicon.svg) with the colours from the main TMP website's stylesheet.
+  Colours were sampled from the live TMP site (header navy, gold button/logo, headline navy, ticker band).
+  Font: Inter (self-hosted via @fontsource-variable/inter, imported in main.tsx).
 */
 :root {
-  --tmp-navy: #14284b;
-  --tmp-navy-2: #1f3d70;
-  --tmp-accent: #f2b134;
-  --tmp-accent-ink: #2a1f00;
+  --tmp-navy: #19255a;        /* header background */
+  --tmp-navy-2: #192f84;      /* brighter navy used for hover / ticker text */
+  --tmp-ink: #0d1951;         /* headline navy */
+  --tmp-accent: #f6c445;      /* gold: logo, buttons, rules */
+  --tmp-accent-ink: #0d1951;  /* text on gold */
   --tmp-teal: #1f9d9a;
 
-  --tmp-bg: #eef1f7;
+  --tmp-bg: #eff3fe;
   --tmp-surface: #ffffff;
-  --tmp-surface-2: #f6f8fc;
-  --tmp-text: #17233b;
-  --tmp-muted: #66728b;
-  --tmp-border: #d9dfeb;
+  --tmp-surface-2: #f5f7fe;
+  --tmp-text: #0d1951;
+  --tmp-muted: #555e85;
+  --tmp-border: #d6ddf1;
   --tmp-danger: #c53a3a;
   --tmp-ok: #1f9d6b;
   --tmp-warn: #e08a00;
-  --tmp-focus: #2f80ed;
+  --tmp-focus: #1f43a6;
 
   --tmp-radius: 10px;
-  --tmp-font: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --tmp-font: "Inter Variable", Inter, "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
   --tmp-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }

@@ -59,7 +59,7 @@ Use a paid plan for classroom use: the free web tier sleeps when idle and the fi
 
    | Variable | Value |
    |---|---|
-   | `VITE_TMP_SIGNIN_URL` | the TMP login URL that returns to the Studio (see TMP_INTEGRATION.md) |
+   | `VITE_TMP_SIGNIN_URL` | optional — defaults to the TMP login page `https://themodernpedagogues-70f4f230adc2.herokuapp.com/login`. Set it to override (e.g. when TMP moves to `themodernpedagogues.com/login`) |
    | `VITE_TMP_HOME_URL` | `https://themodernpedagogues.com` |
    | `VITE_API_BASE_URL` | leave **empty** (same-origin `/api`) |
 

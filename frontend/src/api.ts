@@ -67,5 +67,6 @@ export const api = {
   remove: (id: string) => call<{ ok: true }>(`/api/boards/${id}`, { method: 'DELETE' }),
 };
 
-export const TMP_SIGNIN_URL = (import.meta.env.VITE_TMP_SIGNIN_URL as string | undefined) ?? '';
+export const TMP_SIGNIN_URL = (import.meta.env.VITE_TMP_SIGNIN_URL as string | undefined) ||
+  'https://themodernpedagogues-70f4f230adc2.herokuapp.com/login';
 export const TMP_HOME_URL = (import.meta.env.VITE_TMP_HOME_URL as string | undefined) ?? 'https://themodernpedagogues.com';

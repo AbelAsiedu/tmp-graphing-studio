@@ -68,4 +68,4 @@ cd backend  && npm test                        # API tests (handoff, replay, CSR
 
 ## Branding
 
-All colours live in `frontend/src/theme.css` (`--tmp-*` tokens). The shipped values are a **placeholder** navy-and-gold palette; replace them with the TMP site's real tokens, along with the logo in `App.tsx` and `public/favicon.svg`.
+Colours and font are in `frontend/src/theme.css` (`--tmp-*` tokens, sampled from the live TMP site). The monogram is `frontend/src/assets/tmp-mark.svg` (traced from a screenshot with `frontend/tools/trace_logo.py` — swap in TMP's official SVG if you have it). The sign-in button points at TMP's login page; see `docs/TMP_INTEGRATION.md`.

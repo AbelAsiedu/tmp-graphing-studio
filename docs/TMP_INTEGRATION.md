@@ -74,9 +74,10 @@ Then the launch route redirects with `?handoff=<that session token>`.
 
 `classIds` should be stable identifiers for TMP classes/groups (e.g. `jhs3-math-2026`). They are what tutors publish to and what students submit to, so tutor and student must carry the **same** id for the same class.
 
-## 4. Branding
+## 4. Sign-in link and branding
 
-Match the Studio to the TMP site by editing the `--tmp-*` tokens in `frontend/src/theme.css`, replacing the logo in `App.tsx` and `public/favicon.svg`. No other file contains colours.
+- **Sign-in:** the Studio's "Sign in" button sends people to the TMP login page, `https://themodernpedagogues-70f4f230adc2.herokuapp.com/login` (built-in default; override with `VITE_TMP_SIGNIN_URL`). For the sign-in to *finish inside the Studio*, TMP's login must, after a successful login, continue to the launch route from section 2 (`/graphing-studio/launch`), which redirects back with the handoff token. Until that route exists, people can still sign in to TMP but will land on TMP, not back in the Studio.
+- **Look:** colours (header navy `#19255a`, gold `#f6c445`, ink `#0d1951`, muted `#555e85`, background `#eff3fe`) were sampled from the live TMP site and live in `frontend/src/theme.css`; the font is Inter, self-hosted. The monogram in `frontend/src/assets/tmp-mark.svg` and `public/favicon.svg` was **traced from a screenshot** of the TMP header with `frontend/tools/trace_logo.py`. For a pixel-perfect master, drop TMP's official SVG over `tmp-mark.svg` (keep the file name; the `viewBox` can differ).
 
 ## 5. Rollout checklist
 

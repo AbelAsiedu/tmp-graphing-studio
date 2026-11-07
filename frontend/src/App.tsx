@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import markUrl from './assets/tmp-mark.svg';
 import { TMP_HOME_URL, api, ApiError } from './api';
 import { useAuth } from './auth';
 import { BoardsDialog } from './components/BoardsDialog';
@@ -18,11 +19,14 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 
 const hasContent = (d: Doc) => d.pages.length > 1 || d.pages.some((p) => p.objects.length || p.equations.length || p.chart || p.instruments.length);
 
+/** TMP monogram (traced from the official logo) + gold rule + two-line wordmark, as on the TMP site header. */
 function Logo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="var(--tmp-navy)" />
-      <path d="M12 52V12M12 52h40" stroke="#fff" strokeWidth="3" strokeLinecap="round" fill="none" />
-      <path d="M14 46c10-2 14-30 24-30s8 26 14 28" stroke="var(--tmp-accent)" strokeWidth="4" strokeLinecap="round" fill="none" /></svg>
+    <span className="logo">
+      <img className="logo-mark" src={markUrl} alt="TMP" width="64" height="38" />
+      <i className="logo-rule" aria-hidden="true" />
+      <span className="logo-word">The Modern<br />Pedagogues</span>
+    </span>
   );
 }
 
@@ -130,7 +134,7 @@ export default function App() {
     <div className={`app ${presenting ? 'presenting' : ''}`} style={{ ['--paper' as string]: theme.bg }}>
       {/* ------------------------------------------------------------ header */}
       <header className="header">
-        <a className="brand" href={TMP_HOME_URL} title="Back to The Modern Pedagogues"><Logo /><span><b>TMP</b> Graphing Studio</span></a>
+        <a className="brand" href={TMP_HOME_URL} title="Back to The Modern Pedagogues"><Logo /><span className="studio-tag">Graphing Studio</span></a>
         <input className="title" value={s.title} onChange={(e) => s.setTitle(e.target.value)} aria-label="Drawing title" maxLength={120} />
         <div className="header-actions">
           <button className="icon-btn" onClick={() => s.undo()} disabled={!s.canUndo} title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
@@ -141,7 +145,7 @@ export default function App() {
               ☁ Boards{board?.canWrite ? <small className={`dot ${s.dirty ? 'warn' : 'ok'}`} title={s.dirty ? 'Unsaved changes' : 'All changes saved'} /> : null}
             </button>
           )}
-          <button className="btn gold" onClick={present}>▶ Present</button>
+          <button className="btn gold" onClick={present} aria-label="Present">▶<span className="hide-sm"> Present</span></button>
           {auth.loading ? null : user ? (
             <div className="user" title={user.email ?? user.name}>
               <span className="avatar" aria-hidden="true">{user.name.slice(0, 1).toUpperCase()}</span>
@@ -151,7 +155,7 @@ export default function App() {
           ) : (
             <div className="user">
               {auth.devLogin && <><button className="btn ghost dev-btn" onClick={() => auth.devLogin?.('tutor')}>Dev: tutor</button><button className="btn ghost dev-btn" onClick={() => auth.devLogin?.('student')}>Dev: student</button></>}
-              <button className="btn ghost" onClick={auth.signIn} title={auth.offline ? 'Server not reachable — you can keep drawing offline' : 'Use your TMP account to save boards and share with your class'}>Sign in with TMP</button>
+              <button className="btn ghost" onClick={auth.signIn} title={auth.offline ? 'Server not reachable — you can keep drawing offline' : 'Use your TMP account to save boards and share with your class'}>Sign in<span className="hide-sm"> with TMP</span></button>
             </div>
           )}
         </div>
