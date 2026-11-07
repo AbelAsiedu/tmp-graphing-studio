@@ -6,10 +6,13 @@ import { BoardsDialog } from './components/BoardsDialog';
 import { CanvasStage, type StageHandle } from './components/CanvasStage';
 import { ChartPanel, DrawPanel, ExportPanel, GraphPanel, PagesPanel, PaperPanel, type PanelCtx } from './components/Panels';
 import { THEMES } from './engine/paper';
-import { PALETTE, type Doc } from './engine/types';
+import { PALETTE, uid, type Doc, type Equation } from './engine/types';
 import { store, useStore } from './store';
 import { COLORS, TOOLS, defaultOpts, type ToolId, type ToolOpts } from './toolTypes';
 import { CONSTRUCT_TOOLS } from './engine/constructions';
+import { Tour } from './tour/Tour';
+import { markTourSeen, tourSeen } from './tour/storage';
+import type { TourTab } from './tour/steps';
 
 type Tab = 'graph' | 'draw' | 'chart' | 'paper' | 'pages' | 'export';
 const TABS: { id: Tab; label: string; icon: string }[] = [
@@ -56,6 +59,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('graph');
   const [sheet, setSheet] = useState(false); // mobile bottom sheet
   const [boards, setBoards] = useState(false);
+  const [tour, setTour] = useState(false);
   const [presenting, setPresenting] = useState(false);
   const [spotlight, setSpotlight] = useState(false);
   const [toasts, setToasts] = useState<{ id: number; msg: string }[]>([]);
@@ -113,6 +117,29 @@ export default function App() {
   const confirmReplace = () => !hasContent(store.doc) || confirm('Replace the drawing on screen? Anything not saved to the cloud or a file will be lost.');
 
   // ---- presentation mode ----------------------------------------------------------------
+  // ---- starter tour: offered once to new visitors (not to people who already have work on screen); the ? button replays it
+  const startTour = useCallback(() => { setPresenting(false); setBoards(false); setTour(true); }, []);
+  const closeTour = useCallback((how: 'finished' | 'skipped') => { markTourSeen(how); setTour(false); setSheet(false); setTab('graph'); }, []);
+  const tourGoTab = useCallback((t: TourTab | null) => { if (t) { setTab(t); setSheet(true); } else setSheet(false); }, []);
+  /** The tour's "Plot an example": y = ax² + bx + c with a=1, b=−4, c=3, so the sliders and roots can be seen working. */
+  const plotExample = useCallback(() => {
+    const text = 'y = ax^2 + bx + c';
+    store.update((p) => {
+      if (p.equations.some((e) => e.text === text)) return p;
+      const eq: Equation = { id: uid('e'), text, color: PALETTE[p.equations.length % PALETTE.length], visible: true, width: 2.6, dMin: '', dMax: '', keyPoints: true };
+      return { ...p, params: { ...p.params, a: 1, b: -4, c: 3 }, equations: [...p.equations, eq] };
+    });
+  }, []);
+  useEffect(() => {
+    if (auth.loading) return;
+    const q = new URLSearchParams(window.location.search).get('tour');
+    if (q === '0') return;
+    if (q !== '1' && (tourSeen() || hasContent(store.doc))) return;
+    const t = setTimeout(startTour, 900);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.loading]);
+
   const present = useCallback(() => {
     setPresenting(true);
     setSheet(false);
@@ -152,6 +179,7 @@ export default function App() {
         <a className="brand" href={TMP_HOME_URL} title="Back to The Modern Pedagogues"><Logo /><span className="studio-tag">Graphing Studio</span></a>
         <input className="title" value={s.title} onChange={(e) => s.setTitle(e.target.value)} aria-label="Drawing title" maxLength={120} />
         <div className="header-actions">
+          <button className="icon-btn tour-btn" onClick={startTour} title="Take a quick tour" aria-label="Take a quick tour of the Studio">?</button>
           <button className="icon-btn" onClick={() => s.undo()} disabled={!s.canUndo} title="Undo (Ctrl+Z)" aria-label="Undo">↶</button>
           <button className="icon-btn" onClick={() => s.redo()} disabled={!s.canRedo} title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button>
           <button className="btn ghost hide-sm" onClick={() => { if (confirmReplace()) { s.newDrawing(); setSelection(new Set()); setSaveState('idle'); } }}>New</button>
@@ -160,15 +188,15 @@ export default function App() {
               ☁ Boards{board?.canWrite ? <small className={`dot ${s.dirty ? 'warn' : 'ok'}`} title={s.dirty ? 'Unsaved changes' : 'All changes saved'} /> : null}
             </button>
           )}
-          <button className="btn gold" onClick={present} aria-label="Present">▶<span className="hide-sm"> Present</span></button>
+          <button className="btn gold" data-tour="present" onClick={present} aria-label="Present">▶<span className="hide-sm"> Present</span></button>
           {auth.loading ? null : user ? (
-            <div className="user" title={user.email ?? user.name}>
+            <div className="user" data-tour="account" title={user.email ?? user.name}>
               <span className="avatar" aria-hidden="true">{user.name.slice(0, 1).toUpperCase()}</span>
               <span className="who hide-sm">{user.name}<em className={`role ${user.role}`}>{roleLabel}</em></span>
               <button className="btn ghost" onClick={() => auth.signOut()}>Sign out</button>
             </div>
           ) : (
-            <div className="user">
+            <div className="user" data-tour="account">
               {auth.devLogin && <><button className="btn ghost dev-btn" onClick={() => auth.devLogin?.('tutor')}>Dev: tutor</button><button className="btn ghost dev-btn" onClick={() => auth.devLogin?.('student')}>Dev: student</button></>}
               <button className="btn ghost" onClick={auth.signIn} title={auth.offline ? 'Server not reachable — you can keep drawing offline' : 'Use your TMP account to save boards and share with your class'}>Sign in<span className="hide-sm"> with TMP</span></button>
             </div>
@@ -183,7 +211,7 @@ export default function App() {
 
       <div className="body">
         {/* ---------------------------------------------------------- tool rail */}
-        <nav className="rail" aria-label="Drawing tools">
+        <nav className="rail" data-tour="tools" aria-label="Drawing tools">
           {(['nav', 'draw', 'shape', 'mark'] as const).map((g) => (
             <div className="rail-group" key={g}>
               {TOOLS.filter((t) => t.group === g).map((t) => (
@@ -223,7 +251,7 @@ export default function App() {
             {construct && <span className="pill-hint">{construct.label}</span>}
           </div>
 
-          <div className="stage-wrap">
+          <div className="stage-wrap" data-tour="stage">
             <CanvasStage tool={tool} opts={opts} selection={selection} setSelection={setSelection} selInst={selInst} setSelInst={setSelInst} spotlight={spotlight} toast={toast} handle={stage} />
             <div className="zoom" role="group" aria-label="Zoom">
               <button onClick={() => stage.current?.zoom(1.3)} aria-label="Zoom in" title="Zoom in (+)">＋</button>
@@ -259,7 +287,7 @@ export default function App() {
         </main>
 
         {/* -------------------------------------------------------- side panel */}
-        <aside className={`side ${sheet ? 'open' : ''}`} aria-label="Panels">
+        <aside className={`side ${sheet ? 'open' : ''}`} data-tour="side" aria-label="Panels">
           <div className="tabs" role="tablist">
             {TABS.map((t) => <button key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'on' : ''} onClick={() => { setTab(t.id); setSheet(true); }}><span aria-hidden="true">{t.icon}</span><i>{t.label}</i></button>)}
             <button className="sheet-toggle" onClick={() => setSheet((o) => !o)} aria-label={sheet ? 'Hide panel' : 'Show panel'}>{sheet ? '▾' : '▴'}</button>
@@ -276,6 +304,7 @@ export default function App() {
       {boards && user && <BoardsDialog user={user} onClose={() => setBoards(false)} toast={toast} confirmReplace={confirmReplace} />}
       <div className="toasts" role="status" aria-live="polite">{toasts.map((t) => <div key={t.id} className="toast">{t.msg}</div>)}</div>
       {auth.error && !user && <div className="toasts" style={{ top: 64, bottom: 'auto' }}><div className="toast">{auth.error}</div></div>}
+      {tour && <Tour ctx={{ signedIn: !!user, role: user?.role ?? null }} goTab={tourGoTab} onAction={() => plotExample()} onClose={closeTour} />}
     </div>
   );
 }
