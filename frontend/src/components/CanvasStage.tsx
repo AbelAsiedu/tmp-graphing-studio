@@ -1,5 +1,6 @@
 import { useEffect, useImperativeHandle, useRef, useState, type Ref } from 'react';
 import { add, angleDiff, angleOf, deg, dist, distToSegment, formatNum, letterLabel, niceStep, sub, v, dot } from '../engine/geometry';
+import { eraseAlong } from '../engine/erase';
 import { hitObj, snapTargets, translateObj } from '../engine/hit';
 import { hitHandle, hitInstrument, instrumentEdges, protractorReading, type Xf } from '../engine/instruments';
 import { THEMES, resolveColor } from '../engine/paper';
@@ -38,7 +39,7 @@ type Drag =
   | { k: 'move'; last: Vec }
   | { k: 'inst-move'; id: string; last: Vec }
   | { k: 'inst-rot'; id: string; ang0: number; a0: number }
-  | { k: 'erase' }
+  | { k: 'erase'; last: Vec }
   | { k: 'laser' };
 
 const DRAW_TOOLS: ToolId[] = ['pen', 'highlighter', 'line', 'arrow'];
@@ -234,6 +235,17 @@ export function CanvasStage({ tool, opts, selection, setSelection, selInst, setS
       ctx.beginPath(); ctx.arc(p.x, p.y, 3 + 6 * a, 0, Math.PI * 2); ctx.fill();
     });
 
+    // eraser ring: shows exactly what will be rubbed out
+    if (L.tool === 'eraser' && hover.current) {
+      const r = L.opts.eraserSize;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(hover.current.x, hover.current.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.28)'; ctx.fill();
+      ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.stroke();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(25,37,90,0.9)'; ctx.setLineDash(L.opts.eraseWhole ? [4, 3] : []); ctx.stroke();
+      ctx.restore();
+    }
+
     // spotlight
     if (L.spotlight && hover.current) {
       ctx.save(); ctx.fillStyle = 'rgba(8,16,30,0.62)'; ctx.beginPath();
@@ -415,8 +427,9 @@ export function CanvasStage({ tool, opts, selection, setSelection, selInst, setS
         break;
       }
       case 'eraser': {
-        drag.current = { k: 'erase' };
-        eraseAt(P);
+        eraseKey.current = `erase:${performance.now()}`;   // one drag = one undo step
+        drag.current = { k: 'erase', last: P };
+        doErase(P, P);
         break;
       }
       case 'laser': {
@@ -432,14 +445,13 @@ export function CanvasStage({ tool, opts, selection, setSelection, selInst, setS
     schedule();
   };
 
-  const eraseAt = (P: Vec) => {
-    const X = xf();
+  const eraseKey = useRef('erase');
+  /** Rub out along the pointer's path from `from` to `to` (screen px); gap-free even when the pointer jumps. */
+  const doErase = (from: Vec, to: Vec) => {
+    const L = live.current;
     const pg = store.page;
-    const doomed = pg.objects.filter((o) => !(o.style.cons && !pg.showConstruction) && hitObj(o, P, X, 6));
-    if (doomed.length) {
-      const ids = new Set(doomed.map((o) => o.id));
-      store.update((p) => ({ ...p, objects: p.objects.filter((o) => !ids.has(o.id)) }), 'erase');
-    }
+    const next = eraseAlong(pg.objects, from, to, xf(), { radius: L.opts.eraserSize, whole: L.opts.eraseWhole, showConstruction: pg.showConstruction });
+    if (next) store.update((p) => ({ ...p, objects: next }), eraseKey.current);
   };
 
   const onMove = (e: PointerEvent) => {
@@ -462,7 +474,7 @@ export function CanvasStage({ tool, opts, selection, setSelection, selInst, setS
     const d = drag.current;
     const L = live.current;
     const wp = toPlot(P);
-    if (L.tool === 'laser' || L.spotlight || L.tool === 'trace' || d || seq.current.length || compassCenter.current) {
+    if (L.tool === 'laser' || L.tool === 'eraser' || L.spotlight || L.tool === 'trace' || d || seq.current.length || compassCenter.current) {
       if (L.tool === 'laser' && d?.k === 'laser') laser.current.push({ x: P.x, y: P.y, t: performance.now() });
       schedule();
     }
@@ -519,7 +531,7 @@ export function CanvasStage({ tool, opts, selection, setSelection, selInst, setS
         store.update((p) => ({ ...p, instruments: p.instruments.map((i) => (i.id === d.id ? { ...i, angle: ang } : i)) }), 'inst');
         break;
       }
-      case 'erase': eraseAt(P); break;
+      case 'erase': doErase(d.last, P); d.last = P; break;
       case 'laser': laser.current.push({ x: P.x, y: P.y, t: performance.now() }); break;
     }
     schedule();
@@ -530,6 +542,7 @@ export function CanvasStage({ tool, opts, selection, setSelection, selInst, setS
     if (pointers.current.size < 2) gesture.current = null;
     const d = drag.current;
     drag.current = null;
+    if (e.pointerType !== 'mouse') hover.current = null;   // no hover on touch: hide the eraser ring/spotlight after lifting
     const L = live.current;
     if (d) {
       switch (d.k) {
@@ -661,7 +674,7 @@ export function CanvasStage({ tool, opts, selection, setSelection, selInst, setS
   useEffect(() => { seq.current = []; setHintTick((n) => n + 1); compassCenter.current = null; drag.current = null; }, [tool, page.id]);
 
   const th = THEMES[page.paper.tone];
-  const cursor = tool === 'pan' ? 'grab' : tool === 'text' ? 'text' : tool === 'select' ? 'default' : tool === 'eraser' ? 'cell' : 'crosshair';
+  const cursor = tool === 'pan' ? 'grab' : tool === 'text' ? 'text' : tool === 'select' ? 'default' : tool === 'eraser' ? 'none' : 'crosshair';
   const hint = TOOLS.find((t) => t.id === tool)?.hint ?? (tool.startsWith('c:') ? (() => { const ct = TOOL_BY_ID[tool.slice(2)]; return ct ? ct.hints[Math.min(seq.current.length, ct.hints.length - 1)] : ''; })() : '');
 
   const commitText = () => {

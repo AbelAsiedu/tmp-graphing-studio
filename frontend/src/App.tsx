@@ -19,6 +19,21 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 
 const hasContent = (d: Doc) => d.pages.length > 1 || d.pages.some((p) => p.objects.length || p.equations.length || p.chart || p.instruments.length);
 
+/** Tool icon: the eraser gets a real drawn icon; the rest use their glyph. */
+function ToolGlyph({ tool }: { tool: { id: string; icon: string } }) {
+  if (tool.id !== 'eraser') return <>{tool.icon}</>;
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <g transform="rotate(-38 12 11)">
+        <rect x="3" y="6.5" width="18" height="9" rx="2.2" />
+        <path d="M11 6.5v9" />
+        <rect x="3" y="6.5" width="8" height="9" rx="2.2" fill="currentColor" fillOpacity="0.35" stroke="none" />
+      </g>
+      <path d="M13 21h8" />
+    </svg>
+  );
+}
+
 /** TMP monogram (traced from the official logo) + gold rule + two-line wordmark, as on the TMP site header. */
 function Logo() {
   return (
@@ -172,7 +187,7 @@ export default function App() {
           {(['nav', 'draw', 'shape', 'mark'] as const).map((g) => (
             <div className="rail-group" key={g}>
               {TOOLS.filter((t) => t.group === g).map((t) => (
-                <button key={t.id} className={`tool ${tool === t.id ? 'on' : ''}`} title={t.label} aria-label={t.label} aria-pressed={tool === t.id} onClick={() => { setTool(t.id); setSelection(new Set()); }}><span aria-hidden="true">{t.icon}</span><i>{t.label}</i></button>
+                <button key={t.id} className={`tool ${tool === t.id ? 'on' : ''}`} title={t.label} aria-label={t.label} aria-pressed={tool === t.id} onClick={() => { setTool(t.id); setSelection(new Set()); }}><span aria-hidden="true"><ToolGlyph tool={t} /></span><i>{t.label}</i></button>
               ))}
             </div>
           ))}
@@ -181,6 +196,17 @@ export default function App() {
         {/* ------------------------------------------------------------ stage */}
         <main className="center">
           <div className="stylebar" role="toolbar" aria-label="Pen style">
+            {tool === 'eraser' ? (
+              <>
+                <label className="sl">Eraser size<input type="range" min="5" max="60" step="1" value={opts.eraserSize} onChange={(e) => setOpts({ ...opts, eraserSize: parseInt(e.target.value, 10) })} aria-label="Eraser size" /></label>
+                <div className="seg" role="group" aria-label="Eraser mode">
+                  <button className={!opts.eraseWhole ? 'on' : ''} onClick={() => setOpts({ ...opts, eraseWhole: false })} title="Rub out only the part under the circle">Rub out</button>
+                  <button className={opts.eraseWhole ? 'on' : ''} onClick={() => setOpts({ ...opts, eraseWhole: true })} title="Remove the whole drawing the circle touches">Whole stroke</button>
+                </div>
+                <span className="muted small hide-sm">Filled shapes, points and text are removed whole.</span>
+              </>
+            ) : (
+              <>
             <div className="colors">
               {COLORS.map((c) => (
                 <button key={c} className={`color ${opts.color === c ? 'on' : ''}`} style={{ background: c === 'auto' ? `linear-gradient(135deg, ${theme.ink} 50%, ${theme.bg} 50%)` : c }} title={c === 'auto' ? 'Ink (adapts to paper)' : c} aria-label={c === 'auto' ? 'Ink' : c} aria-pressed={opts.color === c} onClick={() => setOptsAndSelection({ ...opts, color: c })} />
@@ -192,6 +218,8 @@ export default function App() {
             </div>
             <label className="check sm-check"><input type="checkbox" checked={opts.fill} onChange={(e) => setOpts({ ...opts, fill: e.target.checked })} /> Fill</label>
             <label className="check sm-check"><input type="checkbox" checked={opts.snap} onChange={(e) => setOpts({ ...opts, snap: e.target.checked })} /> Snap</label>
+              </>
+            )}
             {construct && <span className="pill-hint">{construct.label}</span>}
           </div>
 
@@ -213,7 +241,7 @@ export default function App() {
               <div className="present-bar" role="toolbar" aria-label="Presentation tools">
                 {(['pen', 'highlighter', 'eraser', 'select', 'pan', 'laser'] as ToolId[]).map((id) => {
                   const t = TOOLS.find((x) => x.id === id)!;
-                  return <button key={id} className={tool === id ? 'on' : ''} title={t.label} aria-label={t.label} onClick={() => setTool(id)}>{t.icon}</button>;
+                  return <button key={id} className={tool === id ? 'on' : ''} title={t.label} aria-label={t.label} onClick={() => setTool(id)}><ToolGlyph tool={t} /></button>;
                 })}
                 <button className={spotlight ? 'on' : ''} title="Spotlight" aria-label="Spotlight" aria-pressed={spotlight} onClick={() => setSpotlight((v) => !v)}>◐</button>
                 <span className="sep" />

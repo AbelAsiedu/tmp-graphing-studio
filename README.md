@@ -22,7 +22,7 @@ tmp-graphing-studio/
 | Equations | Textbook syntax (`ax^2+bx+c`, `sinx`, `sin^2(x)`), cartesian, `x = g(y)`, polar `r = f(theta)`, parametric `(f(t), g(t))`, implicit (`x^2+y^2=25`), inequalities (shaded); degree/radian modes; slider for every free letter; roots, intercepts, turning points and intersections; table of values; draw-on animation |
 | Charts | Bar, pie, line, histogram, frequency polygon, ogive (median/quartiles), scatter + least-squares line, box plot, summary statistics |
 | Constructions | Midpoint, perpendicular bisector, angle bisector, perpendicular from a point, parallel through a point, circumcircle, incircle, regular polygon, angle of given size, triangle from three sides — with the compass arcs shown |
-| Annotation | Pencil, highlighter, eraser, lines, arrows, circles, rectangles, points, text, angle measure, trace, select/move, undo/redo |
+| Annotation | Pencil, highlighter, **eraser (rubs out just the part under an adjustable circle — cuts strokes, lines, circles and outlines cleanly; or removes whole strokes)**, lines, arrows, circles, rectangles, points, text, angle measure, trace, select/move, undo/redo |
 | Teaching | Pages as slides, presentation mode (fullscreen), laser pointer, spotlight |
 | Export | PNG, JPEG, PDF (this page / all pages), save/open `.json` |
 | Cloud | Boards saved per account; tutors publish to a class (read-only for classmates), students submit to their tutor |
